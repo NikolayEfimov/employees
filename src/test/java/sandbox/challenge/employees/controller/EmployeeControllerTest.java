@@ -38,4 +38,41 @@ class EmployeeControllerTest {
                 .andExpect(jsonPath("$.lastName").value("Efimov"))
                 .andExpect(jsonPath("$.position").value("Senior Software Engineer"));
     }
+
+    @Test
+    void testCreateEmployeeInvalidData() throws Exception {
+        var invalidEmployeeJson = """
+                {
+                    "firstName": "Elon",
+                    "position": "CEO"
+                }
+                """;
+
+        mockMvc.perform(post("/api/employees")
+                        .contentType(APPLICATION_JSON)
+                        .content(invalidEmployeeJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation error"))
+                .andExpect(jsonPath("$.messages.lastName").value("Last name is required"));
+    }
+
+    @Test
+    void testCreateEmployeeMultipleInvalidFields() throws Exception {
+        var invalidEmployeeJson = """
+                {
+                    "firstName": "",
+                    "lastName": "",
+                    "position": ""
+                }
+                """;
+
+        mockMvc.perform(post("/api/employees")
+                        .contentType(APPLICATION_JSON)
+                        .content(invalidEmployeeJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation error"))
+                .andExpect(jsonPath("$.messages.firstName").value("First name is required"))
+                .andExpect(jsonPath("$.messages.lastName").value("Last name is required"))
+                .andExpect(jsonPath("$.messages.position").value("Position is required"));
+    }
 }
