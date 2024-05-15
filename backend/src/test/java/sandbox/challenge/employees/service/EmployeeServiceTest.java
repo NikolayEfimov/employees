@@ -118,4 +118,40 @@ class EmployeeServiceTest {
         verify(employeeRepository, never()).save(any(Employee.class));
     }
 
+    @Test
+    void testUpdateEmployeeWithEmptySupervisorId() {
+        var supervisor = new Employee();
+        supervisor.setId(10L);
+        supervisor.setFirstName("Dennis");
+        supervisor.setLastName("Ritchie");
+        supervisor.setPosition("Super Guru");
+
+        var existingEmployee = new Employee();
+        existingEmployee.setId(1L);
+        existingEmployee.setFirstName("Robert");
+        existingEmployee.setLastName("Martin");
+        existingEmployee.setPosition("Guru");
+        existingEmployee.setSupervisor(supervisor);
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(existingEmployee));
+        when(employeeRepository.save(existingEmployee)).thenReturn(existingEmployee);
+
+        var fieldsMap = Map.of(
+                "firstName", "Robert",
+                "lastName", "Martin",
+                "position", "Super Guru",
+                "supervisorId", ""
+        );
+
+        var updatedEmployee = employeeService.update(1L, fieldsMap).orElseThrow();
+
+        assertThat(updatedEmployee.getFirstName()).isEqualTo("Robert");
+        assertThat(updatedEmployee.getLastName()).isEqualTo("Martin");
+        assertThat(updatedEmployee.getPosition()).isEqualTo("Super Guru");
+        assertThat(updatedEmployee.getSupervisor()).isNull();
+
+        verify(employeeRepository).findById(1L);
+        verify(employeeRepository).save(updatedEmployee);
+    }
+
 }
