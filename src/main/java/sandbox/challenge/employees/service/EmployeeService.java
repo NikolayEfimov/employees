@@ -5,6 +5,7 @@ import sandbox.challenge.employees.domain.Employee;
 import sandbox.challenge.employees.repository.EmployeeRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 import static java.time.LocalDateTime.now;
 
@@ -25,6 +26,10 @@ public class EmployeeService {
 
     public List<Employee> getAll() {
         return employeeRepository.findAll();
+    }
+
+    public Optional<Employee> getById(Long id) {
+        return employeeRepository.findById(id);
     }
 
 }

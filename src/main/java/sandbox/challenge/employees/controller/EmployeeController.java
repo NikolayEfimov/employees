@@ -27,5 +27,11 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.getAll());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Employee> getEmployeeById(@PathVariable Long id) {
+        var employee = employeeService.getById(id);
+        return employee.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
 }
 

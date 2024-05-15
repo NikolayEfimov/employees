@@ -8,8 +8,11 @@ import org.mockito.MockitoAnnotations;
 import sandbox.challenge.employees.domain.Employee;
 import sandbox.challenge.employees.repository.EmployeeRepository;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class EmployeeServiceTest {
 
@@ -46,6 +49,26 @@ class EmployeeServiceTest {
         employeeService.getAll();
 
         verify(employeeRepository).findAll();
+    }
+
+    @Test
+    void testGetEmployeeById() {
+        var employee = new Employee();
+        employee.setId(1L);
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+
+        var foundEmployee = employeeService.getById(1L);
+        assertThat(foundEmployee).isPresent();
+        assertThat(foundEmployee.get().getId()).isEqualTo(1L);
+    }
+
+    @Test
+    void testGetEmployeeByIdWhenEmployeeNotFound() {
+        when(employeeRepository.findById(333L)).thenReturn(Optional.empty());
+
+        var employee = employeeService.getById(333L);
+
+        assertThat(employee).isEmpty();
     }
 
 }

@@ -108,4 +108,26 @@ class EmployeeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
+
+    @Test
+    void testGetEmployeeById() throws Exception {
+        var employee = new Employee();
+        employee.setFirstName("Elon");
+        employee.setLastName("Musk");
+        employee.setPosition("CEO");
+        var savedEmployee = employeeRepository.save(employee);
+
+        mockMvc.perform(get("/api/employees/" + savedEmployee.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Elon"))
+                .andExpect(jsonPath("$.lastName").value("Musk"))
+                .andExpect(jsonPath("$.position").value("CEO"));
+    }
+
+    @Test
+    void testGetEmployeeByIdNotFound() throws Exception {
+        mockMvc.perform(get("/api/employees/{id}", 333L)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
 }
