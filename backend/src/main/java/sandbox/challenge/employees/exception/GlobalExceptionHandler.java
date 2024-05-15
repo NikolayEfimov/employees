@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -31,6 +32,12 @@ public class GlobalExceptionHandler {
         });
 
         return createErrorResponse(errors);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        var errorResponse = new ErrorResponse("Resource not found", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, NOT_FOUND);
     }
 
     @ExceptionHandler(InfiniteRecursionException.class)

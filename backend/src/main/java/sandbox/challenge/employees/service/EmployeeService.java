@@ -3,6 +3,7 @@ package sandbox.challenge.employees.service;
 import org.springframework.stereotype.Service;
 import sandbox.challenge.employees.domain.Employee;
 import sandbox.challenge.employees.exception.InfiniteRecursionException;
+import sandbox.challenge.employees.exception.ResourceNotFoundException;
 import sandbox.challenge.employees.repository.EmployeeRepository;
 
 import java.util.List;
@@ -81,10 +82,11 @@ public class EmployeeService {
             if (supervisorIdStr != null && !supervisorIdStr.isEmpty()) {
                 try {
                     var supervisorId = Long.parseLong(supervisorIdStr);
-                    employee.setSupervisor(getById(supervisorId).orElse(null));
+                    var supervisor = getById(supervisorId).orElseThrow(() -> new ResourceNotFoundException("Supervisor not found"));
+                    employee.setSupervisor(supervisor);
                     validateSupervisor(employee);
                 } catch (NumberFormatException e) {
-                    employee.setSupervisor(null);
+                    throw new ResourceNotFoundException("Invalid supervisor ID format");
                 }
             } else {
                 employee.setSupervisor(null);

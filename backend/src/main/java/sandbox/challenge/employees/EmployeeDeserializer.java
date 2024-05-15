@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import sandbox.challenge.employees.domain.Employee;
+import sandbox.challenge.employees.exception.ResourceNotFoundException;
 import sandbox.challenge.employees.service.EmployeeService;
 
 import java.io.IOException;
@@ -41,7 +42,7 @@ public class EmployeeDeserializer extends JsonDeserializer<Employee> {
             if (supervisorIdStr != null && !supervisorIdStr.isEmpty()) {
                 try {
                     var supervisorId = Long.parseLong(supervisorIdStr);
-                    var supervisor = employeeService.getById(supervisorId).orElse(null);
+                    var supervisor = employeeService.getById(supervisorId).orElseThrow(() -> new ResourceNotFoundException("Supervisor not found"));
                     employee.setSupervisor(supervisor);
                 } catch (NumberFormatException e) {
                     employee.setSupervisor(null);
