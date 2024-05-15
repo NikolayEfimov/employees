@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import sandbox.challenge.employees.domain.Employee;
 import sandbox.challenge.employees.exception.InfiniteRecursionException;
 import sandbox.challenge.employees.exception.ResourceNotFoundException;
+import sandbox.challenge.employees.exception.SupervisorHasSubordinatesException;
 import sandbox.challenge.employees.repository.EmployeeRepository;
 
 import java.util.List;
@@ -37,6 +38,14 @@ public class EmployeeService {
     }
 
     public void delete(Long id) {
+        employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+
+        var subordinates = employeeRepository.findBySupervisorId(id);
+        if (!subordinates.isEmpty()) {
+            throw new SupervisorHasSubordinatesException("Cannot delete supervisor with subordinates. Reassign or remove subordinates first.");
+        }
+
         employeeRepository.deleteById(id);
     }
 

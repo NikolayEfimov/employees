@@ -46,6 +46,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, BAD_REQUEST);
     }
 
+    @ExceptionHandler(SupervisorHasSubordinatesException.class)
+    public ResponseEntity<ErrorResponse> handleSupervisorHasSubordinatesException(SupervisorHasSubordinatesException ex) {
+        var errorResponse = new ErrorResponse("Operation not allowed", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, BAD_REQUEST);
+    }
+
     private ResponseEntity<Map<String, Object>> createErrorResponse(Map<String, String> errors) {
         var response = new HashMap<String, Object>();
         response.put("error", "Validation error");

@@ -35,27 +35,34 @@ const EmployeeList: React.FC = () => {
         try {
             await api.delete(`/employees/${id}`);
             fetchEmployees();
-        } catch (error) {
-            console.error('Failed to delete employee:', error);
+            setError(null); // Clear any previous errors
+        } catch (err: any) {
+            if (err.response && err.response.data && err.response.data.message) {
+                setError(err.response.data.message);
+            } else {
+                setError('An error occurred. Please try again.');
+            }
         }
     };
 
     const handleEdit = (employee: Employee) => {
         if (selectedEmployee?.id === employee.id) {
-            // If clicking on the same employee, reset to create mode
             setSelectedEmployee(null);
         } else {
             setSelectedEmployee(employee);
         }
+        setError(null);
     };
 
     const handleFormSubmit = () => {
         fetchEmployees();
         setSelectedEmployee(null);
+        setError(null);
     };
 
     const handleCancelEdit = () => {
         setSelectedEmployee(null);
+        setError(null);
     };
 
     const handleSupervisorChange = (employee: Employee) => {
@@ -66,6 +73,7 @@ const EmployeeList: React.FC = () => {
             setSelectedEmployee(employee);
             setShowSupervisorForm(true);
         }
+        setError(null);
     };
 
     const handleSupervisorSubmit = async (e: React.FormEvent) => {
@@ -110,6 +118,7 @@ const EmployeeList: React.FC = () => {
                 onFormSubmit={handleFormSubmit}
                 onCancelEdit={handleCancelEdit}
             />
+            {error && <div className={styles.error}>{error}</div>}
             <ul>
                 {employees.map((employee) => (
                     <li key={employee.id}>
@@ -150,7 +159,10 @@ const EmployeeList: React.FC = () => {
                             <input
                                 type="text"
                                 value={supervisorId}
-                                onChange={(e) => setSupervisorId(e.target.value)}
+                                onChange={(e) => {
+                                    setSupervisorId(e.target.value);
+                                    setError(null);
+                                }}
                             />
                         </label>
                         <button type="submit">Submit</button>
