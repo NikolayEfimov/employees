@@ -41,4 +41,11 @@ class EmployeeServiceTest {
         verify(employeeRepository).save(employee);
     }
 
+    @Test
+    void testGetAllEmployees() {
+        employeeService.getAll();
+
+        verify(employeeRepository).findAll();
+    }
+
 }

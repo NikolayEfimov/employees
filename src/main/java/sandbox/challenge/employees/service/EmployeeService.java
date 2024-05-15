@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service;
 import sandbox.challenge.employees.domain.Employee;
 import sandbox.challenge.employees.repository.EmployeeRepository;
 
+import java.util.List;
+
 import static java.time.LocalDateTime.now;
 
 
@@ -19,6 +21,10 @@ public class EmployeeService {
     public Employee create(Employee employee) {
         employee.setCreationDate(now());
         return employeeRepository.save(employee);
+    }
+
+    public List<Employee> getAll() {
+        return employeeRepository.findAll();
     }
 
 }
