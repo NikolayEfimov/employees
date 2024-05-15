@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class EmployeeControllerTest {
 
+    private static final long NON_EXISTING_EMPLOYEE_ID = 333L;
     @Autowired
     private MockMvc mockMvc;
 
@@ -125,7 +126,6 @@ class EmployeeControllerTest {
 
     @Test
     void testGetEmployeeByIdNotFound() throws Exception {
-        final long NON_EXISTING_EMPLOYEE_ID = 333L;
         mockMvc.perform(get("/api/employees/{id}", NON_EXISTING_EMPLOYEE_ID)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isNotFound());
@@ -150,9 +150,55 @@ class EmployeeControllerTest {
 
     @Test
     void testDeleteEmployeeNotFound() throws Exception {
-        final long NON_EXISTING_EMPLOYEE_ID = 333L;
         mockMvc.perform(delete("/api/employees/{id}", NON_EXISTING_EMPLOYEE_ID)
                         .contentType(APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testUpdateEmployee() throws Exception {
+        var employee = new Employee();
+        employee.setFirstName("Nikolai");
+        employee.setLastName("Efimov");
+        employee.setPosition("Senior Software Engineer");
+        var savedEmployee = employeeRepository.save(employee);
+
+        var updatedEmployeeJson = """
+                {
+                    "position": "Senior Software Developer"
+                }
+                """;
+
+        var employeeId = savedEmployee.getId();
+        mockMvc.perform(patch("/api/employees/{id}", employeeId)
+                        .contentType(APPLICATION_JSON)
+                        .content(updatedEmployeeJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Nikolai"))
+                .andExpect(jsonPath("$.lastName").value("Efimov"))
+                .andExpect(jsonPath("$.position").value("Senior Software Developer"));
+
+        var updatedEmployee = employeeRepository.findById(employeeId).orElse(null);
+
+        assertThat(updatedEmployee).isNotNull();
+        assertThat(updatedEmployee.getFirstName()).isEqualTo("Nikolai");
+        assertThat(updatedEmployee.getLastName()).isEqualTo("Efimov");
+        assertThat(updatedEmployee.getPosition()).isEqualTo("Senior Software Developer");
+    }
+
+    @Test
+    void testUpdateEmployeeNotFound() throws Exception {
+        var updatedEmployeeJson = """
+                {
+                    "firstName": "Luke",
+                    "lastName": "Skywalker",
+                    "position": "Product Owner"
+                }
+                """;
+
+        mockMvc.perform(patch("/api/employees/{id}", NON_EXISTING_EMPLOYEE_ID)
+                        .contentType(APPLICATION_JSON)
+                        .content(updatedEmployeeJson))
                 .andExpect(status().isNotFound());
     }
 }

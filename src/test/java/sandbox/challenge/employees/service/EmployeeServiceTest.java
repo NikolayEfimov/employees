@@ -8,11 +8,11 @@ import org.mockito.MockitoAnnotations;
 import sandbox.challenge.employees.domain.Employee;
 import sandbox.challenge.employees.repository.EmployeeRepository;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class EmployeeServiceTest {
 
@@ -76,6 +76,46 @@ class EmployeeServiceTest {
         employeeService.delete(1L);
 
         verify(employeeRepository).deleteById(1L);
+    }
+
+    @Test
+    void testUpdateEmployee() {
+        var existingEmployee = new Employee();
+        existingEmployee.setId(1L);
+        existingEmployee.setFirstName("Steve");
+        existingEmployee.setLastName("Jobs");
+        existingEmployee.setPosition("CEO");
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(existingEmployee));
+        when(employeeRepository.save(existingEmployee)).thenReturn(existingEmployee);
+
+        var updates = Map.of(
+                "firstName", "Tim",
+                "lastName", "Cook",
+                "position", "CEO"
+        );
+
+        var updatedEmployee = employeeService.update(1L, updates).orElseThrow();
+
+        assertThat(updatedEmployee.getFirstName()).isEqualTo("Tim");
+        assertThat(updatedEmployee.getLastName()).isEqualTo("Cook");
+        assertThat(updatedEmployee.getPosition()).isEqualTo("CEO");
+
+        verify(employeeRepository).findById(1L);
+        verify(employeeRepository).save(updatedEmployee);
+    }
+
+    @Test
+    void testUpdateEmployeeNotFound() {
+        when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
+
+        var employeeFieldsMap = Map.of("firstName", "Jane");
+        var updatedEmployeeOpt = employeeService.update(1L, employeeFieldsMap);
+
+        assertThat(updatedEmployeeOpt).isEmpty();
+
+        verify(employeeRepository).findById(1L);
+        verify(employeeRepository, never()).save(any(Employee.class));
     }
 
 }

@@ -6,6 +6,7 @@ import sandbox.challenge.employees.domain.Employee;
 import sandbox.challenge.employees.service.EmployeeService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/employees")
@@ -41,6 +42,12 @@ public class EmployeeController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Employee> update(@PathVariable Long id, @RequestBody Map<String, String> employeeFieldsMap) {
+        var employee = employeeService.update(id, employeeFieldsMap);
+        return employee.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
 }
