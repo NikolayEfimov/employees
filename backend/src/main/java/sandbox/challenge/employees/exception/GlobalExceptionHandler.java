@@ -1,4 +1,4 @@
-package sandbox.challenge.employees;
+package sandbox.challenge.employees.exception;
 
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -29,6 +31,12 @@ public class GlobalExceptionHandler {
         });
 
         return createErrorResponse(errors);
+    }
+
+    @ExceptionHandler(InfiniteRecursionException.class)
+    public ResponseEntity<ErrorResponse> handleInfiniteRecursionException(InfiniteRecursionException ex) {
+        var errorResponse = new ErrorResponse("Validation error", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, BAD_REQUEST);
     }
 
     private ResponseEntity<Map<String, Object>> createErrorResponse(Map<String, String> errors) {

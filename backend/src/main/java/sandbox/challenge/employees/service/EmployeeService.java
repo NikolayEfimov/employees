@@ -2,6 +2,7 @@ package sandbox.challenge.employees.service;
 
 import org.springframework.stereotype.Service;
 import sandbox.challenge.employees.domain.Employee;
+import sandbox.challenge.employees.exception.InfiniteRecursionException;
 import sandbox.challenge.employees.repository.EmployeeRepository;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class EmployeeService {
     }
 
     public Employee create(Employee employee) {
+        validateSupervisor(employee);
         employee.setCreationDate(now());
         return employeeRepository.save(employee);
     }
@@ -80,12 +82,23 @@ public class EmployeeService {
                 try {
                     var supervisorId = Long.parseLong(supervisorIdStr);
                     employee.setSupervisor(getById(supervisorId).orElse(null));
+                    validateSupervisor(employee);
                 } catch (NumberFormatException e) {
                     employee.setSupervisor(null);
                 }
             } else {
                 employee.setSupervisor(null);
             }
+        }
+    }
+
+    private void validateSupervisor(Employee employee) {
+        Employee supervisor = employee.getSupervisor();
+        while (supervisor != null) {
+            if (supervisor.getId().equals(employee.getId())) {
+                throw new InfiniteRecursionException("Cannot assign supervisor that creates a cycle");
+            }
+            supervisor = supervisor.getSupervisor();
         }
     }
 

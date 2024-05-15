@@ -201,4 +201,61 @@ class EmployeeControllerTest {
                         .content(updatedEmployeeJson))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void testCreateEmployeeWithCycleThrowsException() throws Exception {
+        var employee1 = """
+                {
+                    "firstName": "Nikolai",
+                    "lastName": "Efimov",
+                    "position": "Senior Software Engineer"
+                }
+                """;
+
+        var employee2 = """
+                {
+                    "firstName": "Maksim",
+                    "lastName": "Lazarev",
+                    "position": "Team Lead",
+                    "supervisorId": "1"
+                }
+                """;
+
+        var employee3 = """
+                {
+                    "firstName": "Javid",
+                    "lastName": "Aliev",
+                    "position": "Developer",
+                    "supervisorId": "2"
+                }
+                """;
+
+        var willCreateCycle = """
+                {
+                    "supervisorId": "3"
+                }
+                """;
+
+        mockMvc.perform(post("/api/employees")
+                        .contentType(APPLICATION_JSON)
+                        .content(employee1))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/employees")
+                        .contentType(APPLICATION_JSON)
+                        .content(employee2))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/employees")
+                        .contentType(APPLICATION_JSON)
+                        .content(employee3))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(patch("/api/employees/{id}", 2)
+                        .contentType(APPLICATION_JSON)
+                        .content(willCreateCycle))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation error"))
+                .andExpect(jsonPath("$.message").value("Cannot assign supervisor that creates a cycle"));
+    }
 }

@@ -6,12 +6,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import sandbox.challenge.employees.domain.Employee;
+import sandbox.challenge.employees.exception.InfiniteRecursionException;
 import sandbox.challenge.employees.repository.EmployeeRepository;
 
 import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 class EmployeeServiceTest {
@@ -152,6 +154,55 @@ class EmployeeServiceTest {
 
         verify(employeeRepository).findById(1L);
         verify(employeeRepository).save(updatedEmployee);
+    }
+
+    @Test
+    void testCreateEmployeeHasToThrowExceptionWhenCycleIsCreated() {
+        var employee1 = new Employee();
+        employee1.setId(1L);
+        employee1.setFirstName("Donald");
+        employee1.setLastName("Knuth");
+        employee1.setPosition("Scientist");
+
+        var employee2 = new Employee();
+        employee2.setId(2L);
+        employee2.setFirstName("Larry");
+        employee2.setLastName("Page");
+        employee2.setPosition("Manager");
+        employee2.setSupervisor(employee1);
+
+        employee1.setSupervisor(employee2);
+
+        when(employeeRepository.save(employee1)).thenReturn(employee1);
+
+        assertThatThrownBy(() -> employeeService.create(employee1))
+                .isInstanceOf(InfiniteRecursionException.class)
+                .hasMessage("Cannot assign supervisor that creates a cycle");
+    }
+
+    @Test
+    void testUpdateEmployeeHasToThrowExceptionWhenCycleIsCreated() {
+        var employee1 = new Employee();
+        employee1.setId(1L);
+        employee1.setFirstName("Ken");
+        employee1.setLastName("Thompson");
+        employee1.setPosition("Developer");
+
+        var employee2 = new Employee();
+        employee2.setId(2L);
+        employee2.setFirstName("Barbara");
+        employee2.setLastName("Liskov");
+        employee2.setPosition("Developer");
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee1));
+        when(employeeRepository.findById(2L)).thenReturn(Optional.of(employee2));
+        when(employeeRepository.save(employee1)).thenReturn(employee1);
+
+        employee2.setSupervisor(employee1);
+
+        assertThatThrownBy(() -> employeeService.update(1L, Map.of("supervisorId", "2")))
+                .isInstanceOf(InfiniteRecursionException.class)
+                .hasMessage("Cannot assign supervisor that creates a cycle");
     }
 
 }
