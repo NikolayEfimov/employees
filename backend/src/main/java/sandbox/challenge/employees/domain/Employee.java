@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import sandbox.challenge.employees.EmployeeDeserializer;
+import sandbox.challenge.employees.service.EmployeeDeserializer;
 
 import java.time.LocalDateTime;
 

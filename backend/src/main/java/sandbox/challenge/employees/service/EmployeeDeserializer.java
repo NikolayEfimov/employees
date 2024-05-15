@@ -1,4 +1,4 @@
-package sandbox.challenge.employees;
+package sandbox.challenge.employees.service;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import sandbox.challenge.employees.domain.Employee;
 import sandbox.challenge.employees.exception.ResourceNotFoundException;
-import sandbox.challenge.employees.service.EmployeeService;
 
 import java.io.IOException;
 

@@ -1,9 +1,10 @@
-package sandbox.challenge.employees;
+package sandbox.challenge.employees.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import sandbox.challenge.employees.service.EmployeeDeserializer;
 import sandbox.challenge.employees.domain.Employee;
 
 @Configuration
