@@ -71,4 +71,11 @@ class EmployeeServiceTest {
         assertThat(employee).isEmpty();
     }
 
+    @Test
+    void testDeleteEmployee() {
+        employeeService.delete(1L);
+
+        verify(employeeRepository).deleteById(1L);
+    }
+
 }

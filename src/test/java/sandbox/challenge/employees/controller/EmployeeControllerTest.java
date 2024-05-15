@@ -11,8 +11,7 @@ import sandbox.challenge.employees.repository.EmployeeRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -126,7 +125,33 @@ class EmployeeControllerTest {
 
     @Test
     void testGetEmployeeByIdNotFound() throws Exception {
-        mockMvc.perform(get("/api/employees/{id}", 333L)
+        final long NON_EXISTING_EMPLOYEE_ID = 333L;
+        mockMvc.perform(get("/api/employees/{id}", NON_EXISTING_EMPLOYEE_ID)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testDeleteEmployee() throws Exception {
+        var employee = new Employee();
+        employee.setFirstName("Sam");
+        employee.setLastName("Bankman-Fried");
+        employee.setPosition("CEO");
+        var savedEmployee = employeeRepository.save(employee);
+        var employeeId = savedEmployee.getId();
+
+        assertThat(employeeRepository.findById(employeeId)).isPresent();
+
+        mockMvc.perform(delete("/api/employees/{id}", employeeId))
+                .andExpect(status().isNoContent());
+
+        assertThat(employeeRepository.findById(employeeId)).isNotPresent();
+    }
+
+    @Test
+    void testDeleteEmployeeNotFound() throws Exception {
+        final long NON_EXISTING_EMPLOYEE_ID = 333L;
+        mockMvc.perform(delete("/api/employees/{id}", NON_EXISTING_EMPLOYEE_ID)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
