@@ -45,7 +45,7 @@ public class EmployeeDeserializer extends JsonDeserializer<Employee> {
                     var supervisor = employeeService.getById(supervisorId).orElseThrow(() -> new ResourceNotFoundException("Supervisor not found"));
                     employee.setSupervisor(supervisor);
                 } catch (NumberFormatException e) {
-                    employee.setSupervisor(null);
+                    throw new ResourceNotFoundException("Invalid supervisor ID format");
                 }
             }
         }

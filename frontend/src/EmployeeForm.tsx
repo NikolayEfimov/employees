@@ -16,7 +16,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit, onC
         position: '',
         supervisorId: '',
     });
-    const [error, setError] = useState<string | null>(null);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         if (employee) {
@@ -27,18 +27,14 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit, onC
                 supervisorId: employee.supervisor ? employee.supervisor.id.toString() : '',
             });
         } else {
-            resetForm();
+            setFormData({
+                firstName: '',
+                lastName: '',
+                position: '',
+                supervisorId: '',
+            });
         }
     }, [employee]);
-
-    const resetForm = () => {
-        setFormData({
-            firstName: '',
-            lastName: '',
-            position: '',
-            supervisorId: '',
-        });
-    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -46,11 +42,14 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit, onC
             ...prevData,
             [name]: value,
         }));
+        setErrors((prevErrors) => ({
+            ...prevErrors,
+            [name]: '',
+        }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
         try {
             if (employee) {
                 await api.patch(`/employees/${employee.id}`, formData);
@@ -58,12 +57,18 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit, onC
                 await api.post('/employees', formData);
             }
             onFormSubmit();
-            resetForm();
+            setFormData({
+                firstName: '',
+                lastName: '',
+                position: '',
+                supervisorId: '',
+            });
+            setErrors({});
         } catch (err: any) {
-            if (err.response && err.response.data && err.response.data.message) {
-                setError(err.response.data.message);
+            if (err.response && err.response.data && err.response.data.messages) {
+                setErrors(err.response.data.messages);
             } else {
-                setError('An error occurred. Please try again.');
+                setErrors({ form: 'An error occurred. Please try again.' });
             }
         }
     };
@@ -71,7 +76,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit, onC
     return (
         <div className={styles.formContainer}>
             <form onSubmit={handleSubmit}>
-                {error && <div className={styles.error}>{error}</div>}
                 <div className={styles.formGroup}>
                     <label>First Name:</label>
                     <input
@@ -80,6 +84,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit, onC
                         value={formData.firstName}
                         onChange={handleChange}
                     />
+                    {errors.firstName && <div className={styles.error}>{errors.firstName}</div>}
                 </div>
                 <div className={styles.formGroup}>
                     <label>Last Name:</label>
@@ -89,6 +94,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit, onC
                         value={formData.lastName}
                         onChange={handleChange}
                     />
+                    {errors.lastName && <div className={styles.error}>{errors.lastName}</div>}
                 </div>
                 <div className={styles.formGroup}>
                     <label>Position:</label>
@@ -98,6 +104,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit, onC
                         value={formData.position}
                         onChange={handleChange}
                     />
+                    {errors.position && <div className={styles.error}>{errors.position}</div>}
                 </div>
                 <div className={styles.formGroup}>
                     <label>Supervisor ID:</label>
@@ -109,7 +116,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit, onC
                     />
                 </div>
                 <button type="submit">{employee ? 'Update' : 'Create'} Employee</button>
-                {employee && <button type="button" onClick={onCancelEdit}>Cancel Edit</button>}
+                {errors.form && <div className={styles.error}>{errors.form}</div>}
+                <button type="button" onClick={onCancelEdit}>Cancel</button>
             </form>
         </div>
     );
