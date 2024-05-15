@@ -39,34 +39,53 @@ public class EmployeeService {
 
     public Optional<Employee> update(Long id, Map<String, String> employeeFieldsMap) {
         var existingEmployee = employeeRepository.findById(id);
-        if (existingEmployee.isPresent()) {
-            var employee = existingEmployee.get();
-            if (employeeFieldsMap.containsKey("firstName")) {
-                employee.setFirstName(employeeFieldsMap.get("firstName"));
-            }
-            if (employeeFieldsMap.containsKey("lastName")) {
-                employee.setLastName(employeeFieldsMap.get("lastName"));
-            }
-            if (employeeFieldsMap.containsKey("position")) {
-                employee.setPosition(employeeFieldsMap.get("position"));
-            }
-            if (employeeFieldsMap.containsKey("supervisorId")) {
-                var supervisorIdStr = employeeFieldsMap.get("supervisorId");
-                if (supervisorIdStr != null && !supervisorIdStr.isEmpty()) {
-                    try {
-                        var supervisorId = Long.parseLong(supervisorIdStr);
-                        employee.setSupervisor(getById(supervisorId).orElse(null));
-                    } catch (NumberFormatException e) {
-                        employee.setSupervisor(null);
-                    }
-                } else {
+
+        if (existingEmployee.isEmpty()) {
+            return Optional.empty();
+        }
+
+        var employee = existingEmployee.get();
+        updateFirstName(employeeFieldsMap, employee);
+        updateLastName(employeeFieldsMap, employee);
+        updatePosition(employeeFieldsMap, employee);
+        updateSupervisor(employeeFieldsMap, employee);
+
+        employeeRepository.save(employee);
+
+        return Optional.of(employee);
+    }
+
+    private void updateFirstName(Map<String, String> fields, Employee employee) {
+        if (fields.containsKey("firstName")) {
+            employee.setFirstName(fields.get("firstName"));
+        }
+    }
+
+    private void updateLastName(Map<String, String> fields, Employee employee) {
+        if (fields.containsKey("lastName")) {
+            employee.setLastName(fields.get("lastName"));
+        }
+    }
+
+    private void updatePosition(Map<String, String> fields, Employee employee) {
+        if (fields.containsKey("position")) {
+            employee.setPosition(fields.get("position"));
+        }
+    }
+
+    private void updateSupervisor(Map<String, String> fields, Employee employee) {
+        if (fields.containsKey("supervisorId")) {
+            var supervisorIdStr = fields.get("supervisorId");
+            if (supervisorIdStr != null && !supervisorIdStr.isEmpty()) {
+                try {
+                    var supervisorId = Long.parseLong(supervisorIdStr);
+                    employee.setSupervisor(getById(supervisorId).orElse(null));
+                } catch (NumberFormatException e) {
                     employee.setSupervisor(null);
                 }
+            } else {
+                employee.setSupervisor(null);
             }
-            employeeRepository.save(employee);
-            return Optional.of(employee);
-        } else {
-            return Optional.empty();
         }
     }
 
