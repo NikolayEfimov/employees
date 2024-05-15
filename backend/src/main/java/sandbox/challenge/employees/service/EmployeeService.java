@@ -51,8 +51,17 @@ public class EmployeeService {
                 employee.setPosition(employeeFieldsMap.get("position"));
             }
             if (employeeFieldsMap.containsKey("supervisorId")) {
-                var supervisorId = Long.parseLong(employeeFieldsMap.get("supervisorId"));
-                employee.setSupervisor(getById(supervisorId).orElse(null));
+                var supervisorIdStr = employeeFieldsMap.get("supervisorId");
+                if (supervisorIdStr != null && !supervisorIdStr.isEmpty()) {
+                    try {
+                        var supervisorId = Long.parseLong(supervisorIdStr);
+                        employee.setSupervisor(getById(supervisorId).orElse(null));
+                    } catch (NumberFormatException e) {
+                        employee.setSupervisor(null);
+                    }
+                } else {
+                    employee.setSupervisor(null);
+                }
             }
             employeeRepository.save(employee);
             return Optional.of(employee);
