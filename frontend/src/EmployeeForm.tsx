@@ -6,16 +6,16 @@ import styles from './EmployeeForm.module.css';
 interface EmployeeFormProps {
     employee: Employee | null;
     onFormSubmit: () => void;
+    onCancelEdit: () => void;
 }
 
-const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit }) => {
+const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit, onCancelEdit }) => {
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
         position: '',
         supervisorId: '',
     });
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (employee) {
@@ -25,8 +25,19 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit }) =
                 position: employee.position,
                 supervisorId: employee.supervisor ? employee.supervisor.id.toString() : '',
             });
+        } else {
+            resetForm();
         }
     }, [employee]);
+
+    const resetForm = () => {
+        setFormData({
+            firstName: '',
+            lastName: '',
+            position: '',
+            supervisorId: '',
+        });
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -38,33 +49,18 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit }) =
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
-        try {
-            if (employee) {
-                await api.patch(`/employees/${employee.id}`, formData);
-            } else {
-                await api.post('/employees', formData);
-            }
-            onFormSubmit();
-            setFormData({
-                firstName: '',
-                lastName: '',
-                position: '',
-                supervisorId: '',
-            });
-        } catch (err: any) {
-            if (err.response && err.response.data && err.response.data.message) {
-                setError(err.response.data.message);
-            } else {
-                setError('An error occurred. Please try again.');
-            }
+        if (employee) {
+            await api.patch(`/employees/${employee.id}`, formData);
+        } else {
+            await api.post('/employees', formData);
         }
+        onFormSubmit();
+        resetForm();
     };
 
     return (
         <div className={styles.formContainer}>
             <form onSubmit={handleSubmit}>
-                {error && <div className={styles.error}>{error}</div>}
                 <div className={styles.formGroup}>
                     <label>First Name:</label>
                     <input
@@ -102,6 +98,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit }) =
                     />
                 </div>
                 <button type="submit">{employee ? 'Update' : 'Create'} Employee</button>
+                {employee && <button type="button" onClick={onCancelEdit}>Cancel Edit</button>}
             </form>
         </div>
     );

@@ -54,6 +54,10 @@ const EmployeeList: React.FC = () => {
         setSelectedEmployee(null);
     };
 
+    const handleCancelEdit = () => {
+        setSelectedEmployee(null);
+    };
+
     const handleSupervisorChange = (employee: Employee) => {
         if (selectedEmployee?.id === employee.id && showSupervisorForm) {
             setShowSupervisorForm(false);
@@ -104,6 +108,7 @@ const EmployeeList: React.FC = () => {
             <EmployeeForm
                 employee={selectedEmployee}
                 onFormSubmit={handleFormSubmit}
+                onCancelEdit={handleCancelEdit}
             />
             <ul>
                 {employees.map((employee) => (
