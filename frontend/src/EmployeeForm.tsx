@@ -15,6 +15,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit }) =
         position: '',
         supervisorId: '',
     });
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (employee) {
@@ -37,23 +38,33 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onFormSubmit }) =
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (employee) {
-            await api.patch(`/employees/${employee.id}`, formData);
-        } else {
-            await api.post('/employees', formData);
+        setError(null);
+        try {
+            if (employee) {
+                await api.patch(`/employees/${employee.id}`, formData);
+            } else {
+                await api.post('/employees', formData);
+            }
+            onFormSubmit();
+            setFormData({
+                firstName: '',
+                lastName: '',
+                position: '',
+                supervisorId: '',
+            });
+        } catch (err: any) {
+            if (err.response && err.response.data && err.response.data.message) {
+                setError(err.response.data.message);
+            } else {
+                setError('An error occurred. Please try again.');
+            }
         }
-        onFormSubmit();
-        setFormData({
-            firstName: '',
-            lastName: '',
-            position: '',
-            supervisorId: '',
-        });
     };
 
     return (
         <div className={styles.formContainer}>
             <form onSubmit={handleSubmit}>
+                {error && <div className={styles.error}>{error}</div>}
                 <div className={styles.formGroup}>
                     <label>First Name:</label>
                     <input

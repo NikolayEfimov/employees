@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import api from './api';
 import { Employee } from './types';
 import EmployeeForm from './EmployeeForm';
@@ -9,6 +10,7 @@ const EmployeeList: React.FC = () => {
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
     const [supervisorId, setSupervisorId] = useState<string>('');
     const [showSupervisorForm, setShowSupervisorForm] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchEmployees();
@@ -39,7 +41,12 @@ const EmployeeList: React.FC = () => {
     };
 
     const handleEdit = (employee: Employee) => {
-        setSelectedEmployee(employee);
+        if (selectedEmployee?.id === employee.id) {
+            // If clicking on the same employee, reset to create mode
+            setSelectedEmployee(null);
+        } else {
+            setSelectedEmployee(employee);
+        }
     };
 
     const handleFormSubmit = () => {
@@ -59,6 +66,7 @@ const EmployeeList: React.FC = () => {
 
     const handleSupervisorSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
         if (selectedEmployee) {
             try {
                 await api.patch(`/employees/${selectedEmployee.id}`, { supervisorId });
@@ -66,8 +74,12 @@ const EmployeeList: React.FC = () => {
                 setSelectedEmployee(null);
                 setSupervisorId('');
                 setShowSupervisorForm(false);
-            } catch (error) {
-                console.error('Failed to update supervisor:', error);
+            } catch (err: any) {
+                if (err.response && err.response.data && err.response.data.message) {
+                    setError(err.response.data.message);
+                } else {
+                    setError('An error occurred. Please try again.');
+                }
             }
         }
     };
@@ -82,6 +94,10 @@ const EmployeeList: React.FC = () => {
         }
     };
 
+    const isValidDate = (date: any) => {
+        return !isNaN(Date.parse(date));
+    };
+
     return (
         <div className={styles.container}>
             <h1>Employee List</h1>
@@ -93,15 +109,23 @@ const EmployeeList: React.FC = () => {
                 {employees.map((employee) => (
                     <li key={employee.id}>
                         <div className={styles.employeeInfo}>
-                            {employee.firstName} {employee.lastName} - {employee.position}
+                            <p><strong>ID:</strong> {employee.id}</p>
+                            <p><strong>First Name:</strong> {employee.firstName}</p>
+                            <p><strong>Last Name:</strong> {employee.lastName}</p>
+                            <p><strong>Position:</strong> {employee.position}</p>
+                            <p><strong>Creation Date:</strong>
+                                {isValidDate(employee.creationDate)
+                                    ? format(new Date(employee.creationDate), 'MMMM dd, yyyy HH:mm')
+                                    : 'N/A'}
+                            </p>
                             {employee.supervisor && (
-                                <div className={styles.supervisorInfo}>
-                                    Supervisor: {employee.supervisor.firstName} {employee.supervisor.lastName}
-                                </div>
+                                <p><strong>Supervisor:</strong> {employee.supervisor.firstName} {employee.supervisor.lastName}</p>
                             )}
                         </div>
                         <div className={styles.buttonGroup}>
-                            <button onClick={() => handleEdit(employee)}>Edit</button>
+                            <button onClick={() => handleEdit(employee)}>
+                                {selectedEmployee?.id === employee.id ? "Cancel Edit" : "Edit"}
+                            </button>
                             <button onClick={() => handleDelete(employee.id)}>Delete</button>
                             <button onClick={() => handleSupervisorChange(employee)}>
                                 {getSupervisorButtonText(employee)}
@@ -114,6 +138,7 @@ const EmployeeList: React.FC = () => {
             {showSupervisorForm && selectedEmployee && (
                 <div className={styles.supervisorFormContainer}>
                     <h3>Change Supervisor for {selectedEmployee.firstName} {selectedEmployee.lastName}</h3>
+                    {error && <div className={styles.error}>{error}</div>}
                     <form onSubmit={handleSupervisorSubmit}>
                         <label>
                             Supervisor ID:

@@ -1,5 +1,6 @@
 package sandbox.challenge.employees.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -7,6 +8,7 @@ import sandbox.challenge.employees.EmployeeDeserializer;
 
 import java.time.LocalDateTime;
 
+import static com.fasterxml.jackson.annotation.JsonFormat.*;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
@@ -27,6 +29,7 @@ public class Employee {
     @JoinColumn(name = "supervisor_id")
     private Employee supervisor;
 
+    @JsonFormat(shape = Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime creationDate;
 
     public Long getId() {
