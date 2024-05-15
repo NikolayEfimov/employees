@@ -1,13 +1,16 @@
 package sandbox.challenge.employees.domain;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import sandbox.challenge.employees.EmployeeDeserializer;
 
 import java.time.LocalDateTime;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
+@JsonDeserialize(using = EmployeeDeserializer.class)
 public class Employee {
     @Id
     @GeneratedValue(strategy = IDENTITY)
