@@ -7,10 +7,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import sandbox.challenge.employees.domain.Employee;
 import sandbox.challenge.employees.exception.InfiniteRecursionException;
+import sandbox.challenge.employees.exception.ResourceNotFoundException;
+import sandbox.challenge.employees.exception.SupervisorHasSubordinatesException;
 import sandbox.challenge.employees.repository.EmployeeRepository;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -74,10 +75,44 @@ class EmployeeServiceTest {
     }
 
     @Test
-    void testDeleteEmployee() {
-        employeeService.delete(1L);
+    public void testDeleteWithInvalidId() {
+        var employeeId = 1L;
 
-        verify(employeeRepository).deleteById(1L);
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> employeeService.delete(employeeId))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Employee not found");
+
+        verify(employeeRepository, never()).deleteById(any());
+    }
+
+    @Test
+    public void testDeleteSupervisorWithSubordinates() {
+        var supervisorId = 1L;
+        var emp = new Employee();
+
+        when(employeeRepository.findById(supervisorId)).thenReturn(Optional.of(emp));
+        when(employeeRepository.findBySupervisorId(supervisorId)).thenReturn(List.of(new Employee()));
+
+        assertThatThrownBy(() -> employeeService.delete(supervisorId))
+                .isInstanceOf(SupervisorHasSubordinatesException.class)
+                .hasMessage("Cannot delete supervisor with subordinates. Reassign or remove subordinates first.");
+
+        verify(employeeRepository, never()).deleteById(any());
+    }
+
+    @Test
+    public void testDeleteWithValidId() {
+        var employeeId = 1L;
+        var emp = new Employee();
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(emp));
+        when(employeeRepository.findBySupervisorId(employeeId)).thenReturn(new ArrayList<>());
+
+        employeeService.delete(employeeId);
+
+        verify(employeeRepository).deleteById(employeeId);
     }
 
     @Test
