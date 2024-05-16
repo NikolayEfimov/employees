@@ -50,5 +50,10 @@ public class EmployeeController {
         return employee.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/{supervisorId}/add-subordinates")
+    public ResponseEntity<Employee> addSubordinates(@PathVariable Long supervisorId, @RequestBody List<Long> subordinateIds) {
+        return ResponseEntity.ok(employeeService.addSubordinates(supervisorId, subordinateIds));
+    }
+
 }
 

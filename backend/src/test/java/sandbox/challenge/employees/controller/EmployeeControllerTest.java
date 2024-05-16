@@ -296,4 +296,94 @@ class EmployeeControllerTest {
                 .andExpect(jsonPath("$.error").value("Operation not allowed"))
                 .andExpect(jsonPath("$.message").value("Cannot delete supervisor with subordinates. Reassign or remove subordinates first."));
     }
+
+    @Test
+    void testAddSubordinatesSuccess() throws Exception {
+        var supervisor = new Employee();
+        supervisor.setFirstName("Nikolai");
+        supervisor.setLastName("Efimov");
+        supervisor.setPosition("Senior Developer");
+        var savedSupervisor = employeeRepository.save(supervisor);
+
+        var subordinate1 = new Employee();
+        subordinate1.setFirstName("Maksim");
+        subordinate1.setLastName("Lazarev");
+        subordinate1.setPosition("Developer");
+        var savedSubordinate1 = employeeRepository.save(subordinate1);
+
+        var subordinate2 = new Employee();
+        subordinate2.setFirstName("Javid");
+        subordinate2.setLastName("Aliev");
+        subordinate2.setPosition("Developer");
+        var savedSubordinate2 = employeeRepository.save(subordinate2);
+
+        var subordinatesJson = String.format("[%d, %d]", savedSubordinate1.getId(), savedSubordinate2.getId());
+
+        mockMvc.perform(post("/api/employees/{supervisorId}/add-subordinates", savedSupervisor.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(subordinatesJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(savedSupervisor.getId()))
+                .andExpect(jsonPath("$.firstName").value("Nikolai"))
+                .andExpect(jsonPath("$.lastName").value("Efimov"))
+                .andExpect(jsonPath("$.position").value("Senior Developer"));
+
+        var updatedSubordinate1 = employeeRepository.findById(savedSubordinate1.getId()).orElse(null);
+        var updatedSubordinate2 = employeeRepository.findById(savedSubordinate2.getId()).orElse(null);
+
+        assertThat(updatedSubordinate1).isNotNull();
+        assertThat(updatedSubordinate1.getSupervisor().getId()).isEqualTo(savedSupervisor.getId());
+
+        assertThat(updatedSubordinate2).isNotNull();
+        assertThat(updatedSubordinate2.getSupervisor().getId()).isEqualTo(savedSupervisor.getId());
+    }
+
+    @Test
+    void testAddSubordinatesWithInvalidSupervisor() throws Exception {
+        var subordinateJson = "[1, 2]";
+
+        mockMvc.perform(post("/api/employees/{supervisorId}/add-subordinates", NON_EXISTING_EMPLOYEE_ID)
+                        .contentType(APPLICATION_JSON)
+                        .content(subordinateJson))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testAddSubordinatesWithInvalidSubordinates() throws Exception {
+        var supervisor = new Employee();
+        supervisor.setFirstName("Nikolai");
+        supervisor.setLastName("Efimov");
+        supervisor.setPosition("Senior Developer");
+        var savedSupervisor = employeeRepository.save(supervisor);
+
+        var invalidSubordinateJson = "[222, 333]";
+
+        mockMvc.perform(post("/api/employees/{supervisorId}/add-subordinates", savedSupervisor.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(invalidSubordinateJson))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Resource not found"))
+                .andExpect(jsonPath("$.message").value("Subordinate not found"));
+    }
+
+    @Test
+    void testAddSubordinatesWithEmptyListOfSubordinates() throws Exception {
+        var supervisor = new Employee();
+        supervisor.setFirstName("Nikolai");
+        supervisor.setLastName("Efimov");
+        supervisor.setPosition("Senior Developer");
+        var savedSupervisor = employeeRepository.save(supervisor);
+
+        var emptySubordinateJson = "[]";
+
+        mockMvc.perform(post("/api/employees/{supervisorId}/add-subordinates", savedSupervisor.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(emptySubordinateJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(savedSupervisor.getId()))
+                .andExpect(jsonPath("$.firstName").value("Nikolai"))
+                .andExpect(jsonPath("$.lastName").value("Efimov"))
+                .andExpect(jsonPath("$.position").value("Senior Developer"));
+    }
+
 }

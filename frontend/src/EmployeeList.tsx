@@ -9,7 +9,9 @@ const EmployeeList: React.FC = () => {
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
     const [supervisorId, setSupervisorId] = useState<string>('');
+    const [subordinateIds, setSubordinateIds] = useState<string>('');
     const [showSupervisorForm, setShowSupervisorForm] = useState<boolean>(false);
+    const [showSubordinateForm, setShowSubordinateForm] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -76,6 +78,17 @@ const EmployeeList: React.FC = () => {
         setError(null);
     };
 
+    const handleSubordinateChange = (employee: Employee) => {
+        if (selectedEmployee?.id === employee.id && showSubordinateForm) {
+            setShowSubordinateForm(false);
+            setSelectedEmployee(null);
+        } else {
+            setSelectedEmployee(employee);
+            setShowSubordinateForm(true);
+        }
+        setError(null);
+    };
+
     const handleSupervisorSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -96,6 +109,27 @@ const EmployeeList: React.FC = () => {
         }
     };
 
+    const handleSubordinateSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        if (selectedEmployee) {
+            try {
+                const idsArray = subordinateIds.split(',').map(id => id.trim());
+                await api.post(`/employees/${selectedEmployee.id}/add-subordinates`, idsArray);
+                fetchEmployees();
+                setSelectedEmployee(null);
+                setSubordinateIds('');
+                setShowSubordinateForm(false);
+            } catch (err: any) {
+                if (err.response && err.response.data && err.response.data.message) {
+                    setError(err.response.data.message);
+                } else {
+                    setError('An error occurred. Please try again.');
+                }
+            }
+        }
+    };
+
     const getSupervisorButtonText = (employee: Employee) => {
         if (selectedEmployee?.id === employee.id && showSupervisorForm) {
             return "Cancel";
@@ -103,6 +137,14 @@ const EmployeeList: React.FC = () => {
             return "Change Supervisor";
         } else {
             return "Assign Supervisor";
+        }
+    };
+
+    const getSubordinateButtonText = (employee: Employee) => {
+        if (selectedEmployee?.id === employee.id && showSubordinateForm) {
+            return "Cancel";
+        } else {
+            return "Assign Subordinates";
         }
     };
 
@@ -144,6 +186,9 @@ const EmployeeList: React.FC = () => {
                             <button onClick={() => handleSupervisorChange(employee)}>
                                 {getSupervisorButtonText(employee)}
                             </button>
+                            <button onClick={() => handleSubordinateChange(employee)}>
+                                {getSubordinateButtonText(employee)}
+                            </button>
                         </div>
                     </li>
                 ))}
@@ -161,6 +206,27 @@ const EmployeeList: React.FC = () => {
                                 value={supervisorId}
                                 onChange={(e) => {
                                     setSupervisorId(e.target.value);
+                                    setError(null);
+                                }}
+                            />
+                        </label>
+                        <button type="submit">Submit</button>
+                    </form>
+                </div>
+            )}
+
+            {showSubordinateForm && selectedEmployee && (
+                <div className={styles.supervisorFormContainer}>
+                    <h3>Assign Subordinates to {selectedEmployee.firstName} {selectedEmployee.lastName}</h3>
+                    {error && <div className={styles.error}>{error}</div>}
+                    <form onSubmit={handleSubordinateSubmit}>
+                        <label>
+                            Subordinate IDs (comma-separated):
+                            <input
+                                type="text"
+                                value={subordinateIds}
+                                onChange={(e) => {
+                                    setSubordinateIds(e.target.value);
                                     setError(null);
                                 }}
                             />

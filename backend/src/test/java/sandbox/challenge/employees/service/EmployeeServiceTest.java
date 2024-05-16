@@ -15,6 +15,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class EmployeeServiceTest {
@@ -238,6 +239,53 @@ class EmployeeServiceTest {
         assertThatThrownBy(() -> employeeService.update(1L, Map.of("supervisorId", "2")))
                 .isInstanceOf(InfiniteRecursionException.class)
                 .hasMessage("Cannot assign supervisor that creates a cycle");
+    }
+
+    @Test
+    void testAddSubordinateThrowsExceptionWhenSupervisorNotFound() {
+        var supervisor = new Employee();
+        var subordinate = new Employee();
+        supervisor.setId(1L);
+        subordinate.setId(2L);
+
+        when(employeeRepository.findById(supervisor.getId())).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> {
+            employeeService.addSubordinates(supervisor.getId(), List.of(subordinate.getId()));
+        });
+    }
+
+    @Test
+    void testAddSubordinateThrowsExceptionWhenSubordinateNotFound() {
+        var supervisor = new Employee();
+        var subordinate = new Employee();
+        supervisor.setId(1L);
+        subordinate.setId(2L);
+
+        when(employeeRepository.findById(supervisor.getId())).thenReturn(Optional.of(supervisor));
+        when(employeeRepository.findById(subordinate.getId())).thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> employeeService.addSubordinates(supervisor.getId(), List.of(subordinate.getId()))
+        );
+    }
+
+    @Test
+    void testAddSubordinateWithValidData() {
+        var supervisor = new Employee();
+        var subordinate = new Employee();
+        supervisor.setId(1L);
+        subordinate.setId(2L);
+
+        when(employeeRepository.findById(supervisor.getId())).thenReturn(Optional.of(supervisor));
+        when(employeeRepository.findById(subordinate.getId())).thenReturn(Optional.of(subordinate));
+        when(employeeRepository.save(any(Employee.class))).thenReturn(subordinate);
+
+        var actual = employeeService.addSubordinates(supervisor.getId(), List.of(subordinate.getId()));
+
+        assertThat(actual).isEqualTo(supervisor);
+
     }
 
 }

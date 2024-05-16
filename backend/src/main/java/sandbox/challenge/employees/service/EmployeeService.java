@@ -113,4 +113,19 @@ public class EmployeeService {
         }
     }
 
+    public Employee addSubordinates(Long supervisorId, List<Long> subordinateIds) {
+        var supervisor = employeeRepository.findById(supervisorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Supervisor not found"));
+
+        for (Long subordinateId : subordinateIds) {
+            var subordinate = employeeRepository.findById(subordinateId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Subordinate not found"));
+            subordinate.setSupervisor(supervisor);
+            validateSupervisor(subordinate);
+            employeeRepository.save(subordinate);
+        }
+
+        return supervisor;
+    }
+
 }

@@ -9,6 +9,7 @@ The application includes a RESTful API built with Spring Boot and a frontend bui
 - Update an employee
 - Delete an employee
 - Link a supervisor to an employee
+- Link an employee to a supervisor
 - Display a list of employees with all known data
 - Handle validation errors
 - Ensure no infinite recursion in supervisor assignment
